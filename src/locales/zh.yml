@@ -1,0 +1,26 @@
+commands:
+  guess-number:
+    description: 猜数字游戏
+    options:
+      base: 设置进制数
+      length: 设置答案长度
+      quit: 退出游戏
+    usage: |-
+      输入要猜测的数字，将得到一个形如 xAyB 的匹配结果：
+      x 为本次猜测的四位数字中，答案包含的且所处位置正确的数字个数；
+      y 为本次猜测的四位数字中，答案包含的但所处位置不正确的数字个数。
+      例如：生成的数字为 0637，猜测 2730，则返回 1A2B。
+      这是因为 3 在答案中包含且位置正确，7 和 0 在答案中包含但位置不正确。
+    messages:
+      idle: 没有正在进行的猜数字游戏。输入“猜数字”开始一轮游戏。
+      start: '{length} 位 {base} 进制猜数字游戏开始。'
+      stop: 游戏结束。
+      invalid-base: 进制应为 2 到 36 之间的整数。
+      invalid-length: 长度应为不大于进制数的正整数。
+      history-empty: 本轮猜数字暂时没有历史记录。
+      history-item: 第 {3} 次猜测内容：{0}，匹配结果：{1}A{2}B
+      result: 数字 {0} 的匹配结果为：{1}A{2}B。
+      win: 恭喜 {0} 回答正确！
+      lose: 游戏失败！正确答案为：{answer}。
+      used-input: 该数字已经使用过，换一个叭~
+      expect-input: 请输入由不同数字构成的 {length} 位 {base} 进制数。
