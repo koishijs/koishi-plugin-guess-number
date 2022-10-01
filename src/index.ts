@@ -19,13 +19,14 @@ export interface Config {
 export const Config: Schema<Config> = Schema.object({
   base: Schema.number().default(10).description('标准开局下的进制数。'),
   length: Schema.number().default(4).description('标准开局下的答案长度。'),
-  chances: Schema.number().default(10).description('标准开局下的最大猜测次数。'),
+  chances: Schema.number().default(10).description('标准开局下的猜测次数。'),
 })
 
 interface Stage {
   answer: string
   base: number
   length: number
+  chances: number
   regexp: RegExp
   counter: number[]
   history: [string, number, number][]
@@ -50,6 +51,7 @@ export function apply(ctx: Context, config: Config) {
     .shortcut('猜数字', { fuzzy: true })
     .option('base', '-b <base>', { fallback: config.base })
     .option('length', '-l <length>', { fallback: config.length })
+    .option('chances', '-c <count>', { fallback: config.chances })
     .option('quit', '-q', { notUsage: true })
     .action(async ({ session, options }, ...numbers) => {
       const id = session.channelId
@@ -67,6 +69,10 @@ export function apply(ctx: Context, config: Config) {
           return session.text('.invalid-length')
         }
 
+        if (!isInteger(options.chances) || options.chances < 1) {
+          return session.text('.invalid-chances')
+        }
+
         const source = '0123456789abcdefghijklmnopqrstuvwxyz'.slice(0, options.base)
         const answer = createAnswer(source, options.length)
         stages[id] = {
@@ -75,6 +81,7 @@ export function apply(ctx: Context, config: Config) {
           history: [],
           base: options.base,
           length: options.length,
+          chances: options.chances,
           regexp: new RegExp(`^[${source}]{${options.length}}$`),
         }
         return session.text('.start', stages[id])
@@ -116,7 +123,7 @@ export function apply(ctx: Context, config: Config) {
           ctx.emit(session, 'guess-number/win', stages[id], output)
           delete stages[id]
           break
-        } else if (history.length >= config.chances) {
+        } else if (history.length >= stages[id].chances) {
           output.push(session.text('.lose', stages[id]))
           ctx.emit(session, 'guess-number/lose', stages[id], output)
           delete stages[id]

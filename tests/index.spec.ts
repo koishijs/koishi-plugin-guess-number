@@ -35,6 +35,12 @@ describe('koishi-plugin-guess-number', () => {
     await client.shouldReply('gn -l 16', '16 位 16 进制猜数字游戏开始。')
   })
 
+  it('check chances', async () => {
+    const client = app.mock.client('123')
+    await client.shouldReply('gn -c 0', '猜测次数应为正整数。')
+    await client.shouldReply('gn -c 1', '4 位 16 进制猜数字游戏开始。')
+  })
+
   it('invalid guess', async () => {
     const client = app.mock.client('123')
     await client.shouldReply('gn', '4 位 16 进制猜数字游戏开始。')

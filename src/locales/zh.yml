@@ -1,9 +1,10 @@
 commands:
   guess-number:
-    description: 猜数字游戏
+    description: 猜数字
     options:
       base: 设置进制数
       length: 设置答案长度
+      chances: 设置猜测次数
       quit: 退出游戏
     usage: |-
       输入要猜测的数字，将得到一个形如 xAyB 的匹配结果：
@@ -17,6 +18,7 @@ commands:
       stop: 游戏结束。
       invalid-base: 进制应为 2 到 36 之间的整数。
       invalid-length: 长度应为不大于进制数的正整数。
+      invalid-chances: 猜测次数应为正整数。
       history-empty: 本轮猜数字暂时没有历史记录。
       history-item: 第 {3} 次猜测内容：{0}，匹配结果：{1}A{2}B
       result: 数字 {0} 的匹配结果为：{1}A{2}B。
