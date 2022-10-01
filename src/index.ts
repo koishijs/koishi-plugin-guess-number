@@ -1,6 +1,13 @@
 import { Context, Dict, isInteger, Schema } from 'koishi'
 import {} from '@koishijs/plugin-rate-limit'
 
+declare module 'koishi' {
+  interface Events {
+    'guess-number/win'(this: Session, stage: Stage, output: string[]): void
+    'guess-number/lose'(this: Session, stage: Stage, output: string[]): void
+  }
+}
+
 export const name = 'guess-number'
 
 export interface Config {
@@ -15,7 +22,7 @@ export const Config: Schema<Config> = Schema.object({
   chances: Schema.number().default(10).description('标准开局下的最大猜测次数。'),
 })
 
-interface State {
+interface Stage {
   answer: string
   base: number
   length: number
@@ -34,7 +41,7 @@ function createAnswer(source: string, length: number) {
 }
 
 export function apply(ctx: Context, config: Config) {
-  const states: Dict<State> = Object.create(null)
+  const stages: Dict<Stage> = Object.create(null)
 
   ctx.i18n.define('zh', require('./locales/zh'))
 
@@ -47,7 +54,7 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({ session, options }, ...numbers) => {
       const id = session.channelId
 
-      if (!states[id]) {
+      if (!stages[id]) {
         if (numbers.length || options.quit) {
           return session.text('.idle')
         }
@@ -62,7 +69,7 @@ export function apply(ctx: Context, config: Config) {
 
         const source = '0123456789abcdefghijklmnopqrstuvwxyz'.slice(0, options.base)
         const answer = createAnswer(source, options.length)
-        states[id] = {
+        stages[id] = {
           answer,
           counter: Array(options.base).fill(0),
           history: [],
@@ -70,12 +77,12 @@ export function apply(ctx: Context, config: Config) {
           length: options.length,
           regexp: new RegExp(`^[${source}]{${options.length}}$`),
         }
-        return session.text('.start', states[id])
+        return session.text('.start', stages[id])
       }
 
-      const { answer, history, base, length, regexp, counter } = states[id]
+      const { answer, history, base, length, regexp, counter } = stages[id]
       if (options.quit) {
-        delete states[id]
+        delete stages[id]
         return session.text('.stop')
       }
 
@@ -105,19 +112,21 @@ export function apply(ctx: Context, config: Config) {
         output.push(session.text('.result', [number, a, b]))
 
         if (a === length) {
-          delete states[id]
           output.push(session.text('.win', [session.username]))
+          ctx.emit(session, 'guess-number/win', stages[id], output)
+          delete stages[id]
           break
         } else if (history.length >= config.chances) {
-          output.push(session.text('.lose', states[id]))
-          delete states[id]
+          output.push(session.text('.lose', stages[id]))
+          ctx.emit(session, 'guess-number/lose', stages[id], output)
+          delete stages[id]
           break
         }
       }
 
       if (!output.length) {
         if (!numbers.length || hasInvalid) {
-          output.push(session.text('.expect-input', states[id]))
+          output.push(session.text('.expect-input', stages[id]))
           if (!numbers.length) {
             if (!history.length) {
               output.push(session.text('.history-empty'))
