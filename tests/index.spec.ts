@@ -62,7 +62,8 @@ describe('koishi-plugin-guess-number', () => {
     const client = app.mock.client('123')
     await client.shouldReply('gn', '4 位 16 进制猜数字游戏开始。')
     await client.shouldReply('gn', '请输入由不同数字构成的 4 位 16 进制数。\n本轮猜数字暂时没有历史记录。')
-    await client.shouldReply('gn 4321 abcd', '数字 4321 的匹配结果为：1A2B。\n数字 abcd 的匹配结果为：0A0B。')
+    await client.shouldReply('4321', '数字 4321 的匹配结果为：1A2B。')
+    await client.shouldReply('abcd', '数字 abcd 的匹配结果为：0A0B。')
     await client.shouldReply('gn', [
       '请输入由不同数字构成的 4 位 16 进制数。',
       '第 1 次猜测内容：4321，匹配结果：1A2B',

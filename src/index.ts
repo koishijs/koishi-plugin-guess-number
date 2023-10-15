@@ -14,12 +14,18 @@ export interface Config {
   base?: number
   length?: number
   chances?: number
+  submission?: 'strict' | 'loose' | 'mention'
 }
 
 export const Config: Schema<Config> = Schema.object({
   base: Schema.number().default(10).description('标准开局下的进制数。'),
   length: Schema.number().default(4).description('标准开局下的答案长度。'),
   chances: Schema.number().default(10).description('标准开局下的猜测次数。'),
+  submission: Schema.union([
+    Schema.const('strict').description('只接受指令输入'),
+    Schema.const('loose').description('允许直接输入答案文本'),
+    Schema.const('mention').description('仅在私聊或被提及时接受直接输入'),
+  ]).role('radio').description('答案提交方式。').default('mention'),
 })
 
 interface Stage {
@@ -46,15 +52,27 @@ export function apply(ctx: Context, config: Config) {
 
   ctx.i18n.define('zh-CN', require('./locales/zh-CN'))
 
+  ctx.middleware(async (session, next) => {
+    const state = stages[session.cid]
+    if (!state || config.submission === 'strict') return next()
+    const { content, atSelf } = session.stripped
+    if (!session.isDirect && !atSelf && config.submission !== 'loose') return next()
+    if (!state.regexp.test(content.toLowerCase())) return next()
+    return session.execute({
+      name: 'guess-number',
+      args: [content],
+    })
+  })
+
   ctx.command('guess-number [...number:string]')
-    .alias('gn', 'csz')
-    .shortcut('猜数字', { fuzzy: true })
+    .alias('猜数字')
+    .alias('gn')
     .option('base', '-b <base>', { fallback: config.base })
     .option('length', '-l <length>', { fallback: config.length })
     .option('chances', '-c <count>', { fallback: config.chances })
     .option('quit', '-q', { notUsage: true })
     .action(async ({ session, options }, ...numbers) => {
-      const id = session.channelId
+      const id = session.cid
 
       if (!stages[id]) {
         if (numbers.length || options.quit) {
