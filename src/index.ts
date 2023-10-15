@@ -1,5 +1,5 @@
-import { Context, Dict, isInteger, Schema } from 'koishi'
-import {} from '@koishijs/plugin-rate-limit'
+import { Context, Dict, isInteger, Schema, Session } from 'koishi'
+import {} from 'koishi-plugin-rate-limit'
 
 declare module 'koishi' {
   interface Events {
@@ -44,7 +44,7 @@ function createAnswer(source: string, length: number) {
 export function apply(ctx: Context, config: Config) {
   const stages: Dict<Stage> = Object.create(null)
 
-  ctx.i18n.define('zh', require('./locales/zh'))
+  ctx.i18n.define('zh-CN', require('./locales/zh-CN'))
 
   ctx.command('guess-number [...number:string]')
     .alias('gn', 'csz')
